@@ -46,7 +46,7 @@ else
 fi
 
 if [ -z "$2" ]; then
-  WORKINGDIR="$(date --iso-8601)-tlspool-environment"; 
+  WORKINGDIR="$(date '+%Y-%m-%d')-tlspool-environment";
 else
   y="$2"
   WORKINGDIR=${y##*/};
@@ -80,20 +80,26 @@ cd "$BASEDIR/$WORKINGDIR"
 # tlspool with a simple "git pull" from the main repository and nix-build command.
 
 if [ ! -d "tlspool" ]; then
-  git clone https://github.com/arpa2/tlspool
-  git checkout 49bf1157e3471ee15bc279d41c9492646a2bf44c
+  git clone https://github.com/amarsman/tlspool
+  cd tlspool
+  git checkout tlspool-gui
+  cd ..
 else
   cd tlspool
-  git pull https://github.com/arpa2/tlspool
-  git checkout 49bf1157e3471ee15bc279d41c9492646a2bf44c
+  git checkout tlspool-gui
+  git pull https://github.com/amarsman/tlspool
   cd ..
 fi
 
 if [ ! -d "nixpkgs" ]; then
-  git clone https://github.com/arpa2/nixpkgs
+  git clone https://github.com/amarsman/nixpkgs
+  cd nixpkgs
+  git checkout tlspool-gui
+  cd ..
 else
   cd nixpkgs
-  git pull https://github.com/arpa2/nixpkgs
+  git checkout tlspool-gui
+  git pull https://github.com/amarsman/nixpkgs
   cd ..
 fi
 
@@ -105,15 +111,24 @@ else
   cd ..
 fi
 
+if [ ! -d "tlspool-gui" ]; then
+  git clone https://github.com/amarsman/tlspool-gui
+else
+  cd steamworks 
+  git pull https://github.com/amarsman/tlspool-gui
+  cd ..
+fi
+
 # Go into the nixpkgs folder and switch to the tlspool branch:
 
 cd nixpkgs
 export NIXPKGS="$BASEDIR/$WORKINGDIR/nixpkgs"
-git checkout tlspool
+git checkout tlspool-gui
 
 # Install tlspool and all the dependencies through nix:
 
 nix-env -f "$NIXPKGS" -iA tlspool
+nix-env -f "$NIXPKGS" -iA tlspool-gui
 
 cd ..
 
@@ -153,7 +168,7 @@ then
     fi
     # Create the config file and check wether it was created.
     printf "$LINE1a$BASEDIR/$WORKINGDIR/token\n$LINE2\n$LINE3\n" >> "$CONFIGFILE"
-    if [ -a "$CONFIGFILE" ]; then 
+    if [ -e "$CONFIGFILE" ]; then 
       printf "\nSoftHSMv2 configuration file $CONFIGFILE created.\n"
     fi
     # Now, given that there was no config, surely there will not be a token. 
@@ -186,4 +201,4 @@ fi
 printf "A simple git pull will update either.\n\nOr just copy $UPDATESCRIPT to wherever you want it to be.\n\n"
 
 printf "You can run 'tlspool -c configfile'. There is an example config file at "
-printf "~i/.nix-profile/etc/tlspool/tlspool.conf which you can modify for usage." 
+printf "~/.nix-profile/etc/tlspool/tlspool.conf which you can modify for usage." 
